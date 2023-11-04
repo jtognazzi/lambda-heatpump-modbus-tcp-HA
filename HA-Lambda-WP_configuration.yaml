@@ -486,7 +486,7 @@ sensor:
       eu08l_emgr_operating_state_txt:
         friendly_name: "EMgr Operating State"
         value_template: >
-          {{ ['Off', 'Automatik', 'Manual', 'Error', 'Offline'][states('sensor.eu13l_emgr_operating_state')|int] }}
+          {{ ['Off', 'Automatik', 'Manual', 'Error', 'Offline'][states('sensor.eu08l_emgr_operating_state')|int] }}
       eu08l_hp1_error_state_txt:
         friendly_name: "HeatPump Error State"
         value_template: >
@@ -502,7 +502,7 @@ sensor:
       eu08l_hp1_request_type_txt:
         friendly_name: "HeatPump Request-Type"
         value_template: >
-          {{ ['No Request', 'Flow Pump Circulation', 'Central Heating', 'Central Cooling', 'Domestic Hot Water'][states('sensor.eu13l_hp1_request-type')|default('No Request')|int] }}
+          {{ ['No Request', 'Flow Pump Circulation', 'Central Heating', 'Central Cooling', 'Domestic Hot Water'][states('sensor.eu08l_hp1_request-type')|default('No Request')|int] }}
       eu08l_boil1_operating_state_txt:
         friendly_name: "ECS Operating State"
         value_template: >

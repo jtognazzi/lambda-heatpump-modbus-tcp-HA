@@ -1,0 +1,577 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+template:
+  - sensor:
+      - name: power_home
+        state: "{{ states('sensor.inverter_active_power') | float(0) - states('sensor.power_meter_active_power') | float(0) }}"
+        unit_of_measurement: "W"
+        state_class: measurement
+        device_class: power
+      - name: power_ug
+        state: "{{ states('sensor.power_home') | float(0) - states('sensor.power_og') | float(0) - states('sensor.power_eg') | float(0) - states('sensor.eu08l_hp1_inverter_power_consumption') | float(0) }}"
+        unit_of_measurement: "W"
+        state_class: measurement
+        device_class: power
+      - name: home_energy_consumption
+        state: "{{ states('sensor.inverter_total_yield') | float(0) - states('sensor.power_meter_exported') | float(0) + states('sensor.power_meter_consumption') | float(0) }}"
+        device_class: energy
+        unit_of_measurement: "kWh"
+        state_class: total_increasing
+      - name: UG_energy_consumption
+        state: "{{ 7000 + states('sensor.home_energy_consumption') | float(0) - states('sensor.energy_og') | float(0) - states('sensor.energy_eg') | float(0) - states('sensor.eu08l_hp1_inverter_energy_consumption') | float(0) }}"
+        device_class: energy
+        unit_of_measurement: "kWh"
+        state_class: total_increasing
+sensor:
+  - platform: lacrosse
+    scan_interval: 60
+    sensors:
+      outdoor_humidity:
+        name: Humidité extérieure
+        type: humidity
+        id: 58
+      outdoor_temperature:
+        name: Température extérieure
+        type: temperature
+        id: 58
+      cave_humidity:
+        name: Cave Humidité ambiante
+        type: humidity
+        id: 19
+      cave_temperature:
+        name: Cave Température ambiante
+        type: temperature
+        id: 19
+      sdb_humidity:
+        name: Salle de Bain Humidité ambiante
+        type: humidity
+        id: 20
+      sdb_temperature:
+        name: Salle de Bain Température ambiante
+        type: temperature
+        id: 20
+  - platform: template
+    sensors:
+      eu08l_ambient_operating_state_txt:
+        friendly_name: "Ambient Operating State"
+        value_template: >
+          {{ ['Off', 'Automatik', 'Manual', 'Error'][states('sensor.eu08l_ambient_operating_state')|default('Off')|int] }}
+      eu08l_emgr_operating_state_txt:
+        friendly_name: "EMgr Operating State"
+        value_template: >
+          {{ ['Off', 'Automatik', 'Manual', 'Error', 'Offline'][states('sensor.eu08l_emgr_operating_state')|int] }}
+      eu08l_hp1_error_state_txt:
+        friendly_name: "HeatPump Error State"
+        value_template: >
+          {{ ['OK', 'Message', 'Warnung', 'Alarm', 'Fault'][states('sensor.eu08l_hp1_error_state')|default('Ok')|int] }}
+      eu08l_hp1_state_txt:
+        friendly_name: "HeatPump State"
+        value_template: >
+          {{ ['Init', 'Reference', 'Restart-Block', 'Ready', 'Start Pumps', 'Start Compressor', 'Pre-Regulation', 'Regulation', 'Not Used', 'Cooling', 'Defrosting', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Stopping', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Fault-Lock', 'Alarm-Block', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Not Used', 'Error-Reset'][states('sensor.eu08l_hp1_state')|default('Ready')|int] }}
+      eu08l_hp1_operating_state_txt:
+        friendly_name: "HeatPump Operating State"
+        value_template: >
+          {{ ['Standby', 'Central Heating', 'Domestic Hot Water', 'Cold Climate', 'Circulate', 'Defrost', 'Off', 'Frost', 'Standby-Frost', 'Not used', 'Summer', 'Holiday', 'Error', 'Warning', 'Info-Message', 'Time-Block', 'Release-Block', 'Mintemp-Block', 'Firmware-Download'][states('sensor.eu08l_hp1_operating_state')|default('Standby')|int] }}
+      eu08l_hp1_request_type_txt:
+        friendly_name: "HeatPump Request-Type"
+        value_template: >
+          {{ ['No Request', 'Flow Pump Circulation', 'Central Heating', 'Central Cooling', 'Domestic Hot Water'][states('sensor.eu08l_hp1_request-type')|default('No Request')|int] }}
+      eu08l_boil1_operating_state_txt:
+        friendly_name: "ECS Operating State"
+        value_template: >
+          {{ ['Standby', 'Domestic Hot Water', 'Legio', 'Summer', 'Frost', 'Holiday', 'Prio-Stop', 'Error', 'Off', 'Prompt-DHW', 'Trailing-Stop', 'Temp-Lock', 'Standby-Frost'][states('sensor.eu08l_boil1_operating_state')|default('Off')|int] }}
+      eu08l_buff1_operating_state_txt:
+        friendly_name: "Accumulateur Operating State"
+        value_template: >
+          {{ ['Standby', 'Heating', 'Cooling', 'Summer', 'Frost', 'Holiday', 'Prio-Stop', 'Error', 'Off', 'Standby-Frost'][states('sensor.eu08l_buff1_operating_state')|default('Off')|int] }}
+      eu08l_hc1_operating_state_txt:
+        friendly_name: "CaS Operating State"
+        value_template: >
+          {{ ['Heating', 'Eco', 'Cooling', 'Floor-dry', 'Frost', 'Max-Temp', 'Error', 'Service', 'Holiday', 'Central Heating Summer', 'Central Cooling Winter', 'Prio-Stop', 'Off', 'Release-Off', 'Time-Off', 'Standby', 'Standby-Heating', 'Standby-Eco', 'Standby-Cooling', 'Standby-Frost', 'Standby-Floor-dry'][states('sensor.eu08l_hc1_operating_state')|default('Standby')|int] }}
+      eu08l_hc1_operating_mode_txt:
+        friendly_name: "CaS Operating Mode"
+        value_template: >
+          {{ ['Off', 'Manual', 'Automatik', 'Auto-Heating', 'Auto-Cooling', 'Frost', 'Summer', 'Floor-dry'][states('sensor.eu08l_hc1_operating_mode')|default('Automatik')|int] }}
+
+modbus:
+  - name: EU08L
+    type: tcp
+    host: 192.168.1.158
+    port: 502
+    sensors:
+#General Ambient section
+      - name: EU08L_Ambient_Error_Number
+        address: 0000
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_Ambient_Operating_State
+        address: 0001
+        input_type: holding
+        count: 1
+        scale: 1
+        precision: 0
+        data_type: uint16
+      - name: EU08L_Ambient_Temperature
+        address: 0002
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: total
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Ambient_Temperature_1h
+        address: 0003
+        input_type: holding
+        unit_of_measurement: "°C"
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Ambient_Temperature_calculated
+        address: 0004
+        input_type: holding
+        unit_of_measurement: "°C"
+        scale: 0.1
+        precision: 1
+        data_type: int16
+# General E-Manager section
+      - name: EU08L_EMgr_Error_Number
+        address: 0100
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_EMgr_Operating_State
+        address: 0101
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: uint16
+      - name: EU08L_EMgr_Actual_Power
+        address: 0102
+        input_type: holding
+        unit_of_measurement: "W"
+        state_class: measurement
+        device_class: power
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_EMgr_Actual_Power_Consumption
+        address: 0103
+        input_type: holding
+        unit_of_measurement: "W"
+        state_class: measurement
+        device_class: power
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_EMgr_Power_Consumption_Setpoint
+        address: 0104
+        input_type: holding
+        unit_of_measurement: "W"
+        state_class: total
+        scale: 1
+        precision: 0
+        data_type: int16
+# Heat Pump No. 1 --for additonal heatpumps, this section needs to be duplicated and second digit of address increased by 1--
+      - name: EU08L_Hp1_Error_State
+        address: 1000
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: uint16
+      - name: EU08L_Hp1_Error_Number
+        address: 1001
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_Hp1_State
+        address: 1002
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: uint16
+      - name: EU08L_Hp1_Operating_State
+        address: 1003
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: uint16
+      - name: EU08L_Hp1_Flow_Line_Temperature
+        address: 1004
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.01
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hp1_Return_Line_Temperature
+        address: 1005
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.01
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hp1_Volume_flow_heat_sink
+        address: 1006
+        input_type: holding
+        unit_of_measurement: "l/min"
+        state_class: measurement
+        device_class: volume
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hp1_Energy_source_inlet_temperature
+        address: 1007
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.01
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hp1_Energy_source_outlet_temperature
+        address: 1008
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.01
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hp1_Volume_flow_energy_source
+        address: 1009
+        input_type: holding
+        unit_of_measurement: "l/min"
+        state_class: measurement
+        device_class: volume
+        scale: 0.01
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hp1_Compressor_unit_rating
+        address: 1010
+        input_type: holding
+        unit_of_measurement: "%"
+        state_class: measurement
+        device_class: power_factor
+        scale: 0.01
+        precision: 0
+        data_type: uint16
+      - name: EU08L_Hp1_Actual_Heating_Capacity
+        address: 1011
+        input_type: holding
+        unit_of_measurement: "kW"
+        state_class: measurement
+        device_class: power
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hp1_Inverter_Power_Consumption
+        address: 1012
+        input_type: holding
+        unit_of_measurement: "W"
+        state_class: measurement
+        device_class: power
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_Hp1_COP
+        address: 1013
+        input_type: holding
+        state_class: measurement
+        scale: 0.01
+        precision: 2
+        data_type: int16
+      - name: EU08L_Hp1_Request-Type
+        address: 1015
+        input_type: holding
+        unit_of_measurement: ""
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_Hp1_Requested_flow_line_temperature
+        address: 1016
+        input_type: holding
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hp1_Requested_return_line_temperature
+        address: 1017
+        input_type: holding
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hp1_Requested_flow_to_return_line_temperature_difference
+        address: 1018
+        input_type: holding
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hp1_Relais_State_2nd_Heating_Stage
+        address: 1019
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_Hp1_Compressor_Power_Consumption_accumulated
+        address: 1020
+        input_type: holding
+        unit_of_measurement: "Wh"
+        device_class: energy
+        state_class: total
+        scale: 1
+        precision: 0
+        data_type: int32
+      - name: EU08L_Hp1_Compressor_Thermal_Energy_Output_accumulated
+        address: 1022
+        input_type: holding
+        unit_of_measurement: "Wh"
+        device_class: energy
+        state_class: total
+        scale: 1
+        precision: 0
+        data_type: int32
+# Boiler section --for additonal boiler, this section needs to be duplicated, rename the name to ....Boil2...." and increase second digit of address by 1--
+      - name: EU08L_Boil1_Error_Number
+        address: 2000
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_Boil1_Operating_state
+        address: 2001
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: uint16
+      - name: EU08L_Boil1_Actual_high_temperature
+        address: 2002
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Boil1_Actual_low_temperature
+        address: 2003
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Boil1_Set_temperature
+        address: 2050
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+# Buffer  --for additonal buffer, this section needs to be duplicated, rename name to "...Buff2...." and increase second digit of address by 1--
+      - name: EU08L_Buff1_Error_Number
+        address: 3000
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_Buff1_Operating_state
+        address: 3001
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: uint16
+      - name: EU08L_Buff1_Actual_high_temperature
+        address: 3002
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Buff1_Actual_low_temperature
+        address: 3003
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Buff1_Set_temperature
+        address: 3050
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+# Solar  --for additonal solar modules, this section needs to be duplicated, rename name to "...Sol2..." and increase second digit of address by 1--
+      - name: EU08L_Sol1_Error_Number
+        address: 4000
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_Sol1_Operating_state
+        address: 4001
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: uint16
+      - name: EU08L_Sol1_Actual_collector_temperature
+        address: 4002
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Sol1_Actual_buffer_sensor1_temperature
+        address: 4003
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Sol1_Actual_buffer_sensor2_temperature
+        address: 4004
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Sol1_Set_max_buffer_temperature
+        address: 4050
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Sol1_Set_buffer_changeover_temperature
+        address: 4051
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+# Heating Circuit -- e.g. underfloor heating --for additonal heating circuits , this section needs to be duplicated, rename name to "...Hc2..." and increase second digit of address by 1--
+      - name: EU08L_Hc1_Error_Number
+        address: 5000
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_Hc1_Operating_state
+        address: 5001
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: uint16
+      - name: EU08L_Hc1_Flow_line_temperature
+        address: 5002
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hc1_Return_line_temperature
+        address: 5003
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hc1_Room_device_temperature
+        address: 5004
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hc1_Set_flow_line_temperature
+        address: 5005
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hc1_Operating_mode
+        address: 5006
+        input_type: holding
+        scale: 1
+        precision: 0
+        data_type: int16
+      - name: EU08L_Hc1_Set_flow_line_offset_temperature
+        address: 5050
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hc1_Set_heating_mode_room_temperature
+        address: 5051
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
+      - name: EU08L_Hc1_Set_cooling_mode_room_temperature
+        address: 5052
+        input_type: holding
+        unit_of_measurement: "°C"
+        state_class: measurement
+        device_class: temperature
+        scale: 0.1
+        precision: 1
+        data_type: int16
